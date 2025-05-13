@@ -1,7 +1,7 @@
 <script setup>
 import { GetMovieDetails, GetMovieScreeningDates } from '@/db/api';
 import router from '@/router';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
@@ -11,8 +11,11 @@ const movieData = ref([]);
 const screeningDates = ref([]);
 const screeningIds = ref([]);
 
-movieData.value = GetMovieDetails(route.params.id);
 screeningDates.value = GetMovieScreeningDates(route.params.id);
+
+onMounted(async () => {
+    movieData.value = await GetMovieDetails(route.params.id)
+})
 
 // Get screening IDs for each date
 const getScreeningIds = async () => {
@@ -60,7 +63,10 @@ const handleDateClick = (date) => {
 </script>
 
 <template>
-<div class="cashier-movie-container">
+<div v-if="!movieData.value || !movieData.value.length">
+    loading
+</div>
+<div v-else class="cashier-movie-container">
     <div class="movie-header">
         <div class="movie-poster">
             <img :src="'data:image/gif;base64,' + movieData.value[0].Movie.Poster" alt="Movie poster">

@@ -1,14 +1,32 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
+import axios from 'axios'
 
-
-export const useUserStore = defineStore('currentUser',() => {
+export const useUserStore = defineStore('user', () => {
     const username = ref('')
     const email = ref('')
-    const role = ref('')
     const id = ref(0)
 
     const getUsername = computed(() => username.value)
+
+    const token = ref(localStorage.getItem('token') || '')
+    const role = ref(localStorage.getItem('role') || '')
+    const userId = ref(localStorage.getItem('userId') || '')
+
+    const setToken = (newToken) => {
+        token.value = newToken
+        localStorage.setItem('token', newToken)
+    }
+
+    const setRole = (newRole) => {
+        role.value = newRole
+        localStorage.setItem('role', newRole)
+    }
+
+    const setUserId = (newUserId) => {
+        userId.value = newUserId
+        localStorage.setItem('userId', newUserId)
+    }
 
     function setUserData(login, mail, userRole, userid) {
         username.value = login
@@ -24,7 +42,48 @@ export const useUserStore = defineStore('currentUser',() => {
         id.value = ""
     }
 
-    return {username, email, role, getUsername, id, setUserData, resetUserData}
+    const logout = () => {
+        token.value = ''
+        role.value = ''
+        userId.value = ''
+        localStorage.removeItem('token')
+        localStorage.removeItem('role')
+        localStorage.removeItem('userId')
+    }
+
+    const login = async (username, password) => {
+        try {
+            const response = await axios.post('http://localhost:3000/Login', {
+                username,
+                password
+            })
+
+            if (response.data.token) {
+                setToken(response.data.token)
+                setRole(response.data.role)
+                setUserId(response.data.userId)
+                return true
+            }
+            return false
+        } catch (error) {
+            console.error('Login error:', error)
+            return false
+        }
+    }
+
+    return {
+        token,
+        role,
+        userId,
+        login,
+        logout,
+        setToken,
+        setRole,
+        setUserId,
+        setUserData,
+        resetUserData,
+        getUsername,
+    }
 })
 
 export const useTicketStore = defineStore('ticket',() => {

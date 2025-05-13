@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import MovieEditView from '@/views/MovieEditView.vue';
+import MovieManagementView from '@/views/MovieManagementView.vue';
 import ScreeningEditView from '@/views/ScreeningEditView.vue';
 import MovieView from '@/views/MovieView.vue';
 import AuditoriumView from '@/views/AuditoriumView.vue';
 import UserProfile from '@/views/UserProfile.vue';
 import Ticket from '@/components/Ticket.vue';
 import CashierMovieView from '@/views/CashierMovieView.vue';
+import CashierHomeView from '@/views/CashierHomeView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -17,6 +18,11 @@ const router = createRouter({
       component: HomeView
     },
     {
+      path: '/cashier',
+      name: 'cashier-home',
+      component: CashierHomeView
+    },
+    {
       path: '/:date',
       name: 'date',
       component: HomeView
@@ -24,7 +30,7 @@ const router = createRouter({
     {
       path: '/MovieEdit',
       name: 'movieedit',
-      component: MovieEditView
+      component: MovieManagementView
     },
     {
       path: '/ScreeningEdit',

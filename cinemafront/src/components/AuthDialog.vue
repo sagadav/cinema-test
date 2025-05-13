@@ -161,12 +161,16 @@ const handleLoginSubmit = async () => {
   }
   try {
     const data = await AuthMe(email.value, password.value); 
-
+    
+    // Сохраняем токен и данные пользователя
+    store.setToken(data.token)
+    store.setRole(data.role)
+    store.setUserId(data.userId)
     store.setUserData(data.Username, data.Email, data.Role, data.Id);
 
     isAlertOpen.value = true
-    
-    emit('checkError', errors.value.success);
+    emit('checkError', errors.value.success)
+    closeModal() // Закрываем модальное окно после успешного входа
   } catch (error) {
     console.error('Ошибка при входе:', error);
     emit("checkError", error.response.data)
@@ -181,10 +185,15 @@ const handleRegisterSubmit = async () => {
   try {
     const data = await RegMe(username.value, registerPassword.value, registerEmail.value);
     
+    // Сохраняем токен и данные пользователя после регистрации
+    store.setToken(data.token)
+    store.setRole(data.role)
+    store.setUserId(data.userId)
     store.setUserData(data.Username, data.Email, data.Role, data.Id);
     
     isAlertOpen.value = true
-    emit('checkError', errors.value.success);
+    emit('checkError', errors.value.success)
+    closeModal() // Закрываем модальное окно после успешной регистрации
     
   } catch (error) {
     console.error('Ошибка при регистрации:', error);

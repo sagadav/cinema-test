@@ -86,100 +86,160 @@ const reserve = async () => {
 </script>
 
 <template>
-<nav-bar></nav-bar>
-<div class="screening-info" v-if="screeningData.value[0]">
-    <h1>
-        {{ screeningData.value[0].MovieDto.Title }}
-    </h1> 
-    <p>
-        {{formattedDate(screeningData.value[0].ScreeningStamp) }}
-    </p>
-    <p style="background-color: #3788d0; width: 80px; text-align: center; border-radius: 8px; padding: 5px; color: white;">
-        {{ formatDate(screeningData.value[0].ScreeningStamp) }}
-    </p>
-    <div style="display: flex; align-items: center;">
-        <p style="margin-right: 10px;">        
-            {{screeningData.value[0].Cost }} руб.
-        </p>
-        <p class="seat" style="margin-right: 20px;"></p>
-        <p style="margin-right: 10px;">        
-            Занято
-        </p>
-        <p class="seat seat_reserved" style="margin-right: 20px;"></p>
-        <p style="margin-right: 10px;">        
-            Выбрано
-        </p>
-        <p class="seat seat_selected"></p>
-    </div>
-</div>
-<main>
-    <div class="seats">
-        <div v-for="(value, index) in data.value" style="display: flex; gap: 3px; height: 40px;">
-            <div style="display: flex; flex-direction: column; justify-content: center;">
-                <p v-if="index % 8 === 0">{{ (index / 8) + 1 }}</p>
+<div class="auditorium-container">
+    <div class="screening-info" v-if="screeningData.value[0]">
+        <h1>{{ screeningData.value[0].MovieDto.Title }}</h1> 
+        <div class="screening-details">
+            <p class="date">{{formattedDate(screeningData.value[0].ScreeningStamp) }}</p>
+            <p class="time">{{ formatDate(screeningData.value[0].ScreeningStamp) }}</p>
+            <p class="price">{{screeningData.value[0].Cost }} руб.</p>
+        </div>
+        <div class="seat-legend">
+            <div class="legend-item">
+                <p class="seat"></p>
+                <span>Доступно</span>
             </div>
-            <div style="height: 40px;">
-                <button class="seat" :disabled="value.isReserved" :class="{ seat_reserved: value.isReserved, seat_selected: selectedSeat.includes(value) }" @click="reserveSeat(value)"></button>    
+            <div class="legend-item">
+                <p class="seat seat_reserved"></p>
+                <span>Занято</span>
+            </div>
+            <div class="legend-item">
+                <p class="seat seat_selected"></p>
+                <span>Выбрано</span>
             </div>
         </div>
     </div>
-</main>
 
-<div style="display: flex; width: 100%; justify-content: center;" v-if="selectedSeat.length > 0">
-    <div class="selected-seats">
-        <p v-for="seat in selectedSeat" class="selected-seat">
-            Ряд: {{ seat.seatRow }} Номер: {{ seat.seatNum }}
-        </p>
-        <div v-if="store.role === 'Cashier'" class="user-selection">
-            <label for="userSelect">Выберите покупателя:</label>
-            <select id="userSelect" v-model="selectedUserId" class="user-select">
-                <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.username }} ({{ user.email }})
-                </option>
-            </select>
+    <main class="seats-container">
+        <div class="seats">
+            <div v-for="(value, index) in data.value" class="seat-row">
+                <div class="row-number">
+                    <p v-if="index % 8 === 0">{{ (index / 8) + 1 }}</p>
+                </div>
+                <button 
+                    class="seat" 
+                    :disabled="value.isReserved" 
+                    :class="{ seat_reserved: value.isReserved, seat_selected: selectedSeat.includes(value) }" 
+                    @click="reserveSeat(value)">
+                </button>    
+            </div>
         </div>
-        <p style="text-align: center; align-self: center">Стоимость: {{ screeningData.value[0].Cost * selectedSeat.length }} руб.</p>
-        <button class="btn" @click="reserve">Забронировать</button>
+    </main>
+
+    <div class="booking-section" v-if="selectedSeat.length > 0">
+        <div class="selected-seats">
+            <div class="selected-seats-list">
+                <p v-for="seat in selectedSeat" class="selected-seat">
+                    Ряд: {{ seat.seatRow }} Номер: {{ seat.seatNum }}
+                </p>
+            </div>
+            
+            <div v-if="store.role === 'Cashier'" class="user-selection">
+                <label for="userSelect">Выберите покупателя:</label>
+                <select id="userSelect" v-model="selectedUserId" class="user-select">
+                    <option v-for="user in users" :key="user.id" :value="user.id">
+                        {{ user.username }} ({{ user.email }})
+                    </option>
+                </select>
+            </div>
+            
+            <div class="booking-summary">
+                <p class="total-price">Стоимость: {{ screeningData.value[0].Cost * selectedSeat.length }} руб.</p>
+                <button class="btn" @click="reserve">Забронировать</button>
+            </div>
+        </div>
     </div>
 </div>
 </template>
 
 <style scoped>
-main {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+.auditorium-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.btn {
-    width: 150px; 
-    height: 40px; 
-    background-color: #3788d0; 
-    border: none; 
-    border-radius: 8px; 
-    color: white; 
-    font-size: 16px; 
-    margin-left: 20px;
-    cursor: pointer;
+.screening-info {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.screening-info h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.screening-details {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.date, .time, .price {
+    font-size: 18px;
+    color: #666;
+}
+
+.time {
+    background-color: #3788d0;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 8px;
+}
+
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.seats-container {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
 }
 
 .seats {
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 30px;
-    width: 470px;
     flex-wrap: wrap;
+    gap: 8px;
+    max-width: 560px;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.row-number {
+    width: 20px;
+    text-align: center;
+    color: #666;
 }
 
 .seat {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     background-color: #128695;
-    border-radius: 8px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.seat:hover:not(.seat_reserved) {
+    transform: scale(1.05);
+    background-color: #0f6b77;
 }
 
 .seat.seat_reserved {
@@ -191,47 +251,81 @@ main {
     background-color: #ed796a;
 }
 
-.screening-info {
-    display: flex; 
-    flex-direction: column; 
-    width: 100%; 
-    font-size: 20px; 
-    align-items: center; 
-    gap: 10px; 
-    margin-bottom: 50px; 
-    margin-top: 30px;
+.booking-section {
+    margin-top: 40px;
 }
 
 .selected-seats {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+}
+
+.selected-seats-list {
     display: flex;
-    width: 800px;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    margin-top: 50px;
     flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
 }
 
 .selected-seat {
-    width: auto;
-    padding: 10px;
-    border: 1px solid black;
-    border-radius: 8px;
-    margin-right: 30px;
+    background-color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 16px;
 }
 
 .user-selection {
-    margin: 10px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+}
+
+.user-selection label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
 }
 
 .user-select {
-    padding: 5px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
     width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
 }
 
+.booking-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.total-price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.btn {
+    padding: 12px 24px;
+    background-color: #3788d0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #2d6da3;
+}
 </style>

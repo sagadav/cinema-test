@@ -1,9 +1,42 @@
 import axios from "axios";
 import {ref} from 'vue';
+import { useUserStore } from '@/store'
+
+// Создаем экземпляр axios с базовым URL
+const api = axios.create({
+  baseURL: 'http://localhost:3000'
+})
+
+// Добавляем перехватчик запросов для добавления токена
+api.interceptors.request.use(
+  (config) => {
+    const store = useUserStore()
+    if (store.token) {
+      config.headers.Authorization = `Bearer ${store.token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Добавляем перехватчик ответов для обработки ошибок авторизации
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const store = useUserStore()
+      store.logout()
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
 export const LoadSchedule = async (date) => {
     let data = ref([]);
-    await axios.get(`http://localhost:3000/Schedule?date=${date}`).then(response => {
+    await api.get(`/Schedule?date=${date}`).then(response => {
         data.value = response.data
     }).catch(error => {
         console.log(error);
@@ -13,7 +46,7 @@ export const LoadSchedule = async (date) => {
 
 export const getAvailableSeats = (screeningId) => {
     let data = ref([]);
-    axios.get(`http://localhost:3000/GetAvailableSeats/${screeningId}`).then(response => {
+    api.get(`/GetAvailableSeats/${screeningId}`).then(response => {
         data.value = response.data
     }).catch(error => {
         console.log(error);
@@ -21,9 +54,9 @@ export const getAvailableSeats = (screeningId) => {
     return data;
 }
 
-export const GetMovieDetails = (id) => {
+export const GetMovieDetails = async (id) => {
     let data = ref([]);
-    axios.get(`http://localhost:3000/Movie/${id}`).then(response => {
+    await api.get(`/Movie/${id}`).then(response => {
         data.value = response.data
     }).catch(error => {
         console.log(error);
@@ -33,7 +66,7 @@ export const GetMovieDetails = (id) => {
 
 export const GetMovieScreeningDates = (id) => {
     let data = ref([]);
-    axios.get(`http://localhost:3000/Movie/${id}/Dates`).then(response => {
+    api.get(`/Movie/${id}/Dates`).then(response => {
         data.value = response.data
     }).catch(error => {
         console.log(error);
@@ -43,7 +76,7 @@ export const GetMovieScreeningDates = (id) => {
 
 export const GetScreeningDetails = (id) => {
     let data = ref([]);
-    axios.get(`http://localhost:3000/Screening/${id}`).then(response => {
+    api.get(`/Screening/${id}`).then(response => {
         data.value = response.data
     }).catch(error => {
         console.log(error);
@@ -53,7 +86,7 @@ export const GetScreeningDetails = (id) => {
 
 export const GetAllSchedule = () => {
     let data = ref([]);
-    axios.get('http://localhost:3000/GetAllSchedule').then(response => {
+    api.get('/GetAllSchedule').then(response => {
         data.value = response.data
     });
     return data;
@@ -61,7 +94,7 @@ export const GetAllSchedule = () => {
 
 export const GetScheduleDates = async () => {
     let data = ref([]);
-    await axios.get('http://localhost:3000/ScheduleDates').then(response => {
+    await api.get('/ScheduleDates').then(response => {
         data.value = response.data
     });
     return data;
@@ -69,7 +102,7 @@ export const GetScheduleDates = async () => {
 
 export const GetMovieTitle = () => {
     let data = ref([]);
-    axios.get('http://localhost:3000/GetMovies').then(response => {
+    api.get('/GetMovies').then(response => {
         data.value = response.data
     });
     return data;
@@ -77,7 +110,7 @@ export const GetMovieTitle = () => {
 
 export const GetHalls = () => {
     let data = ref([]);
-    axios.get('http://localhost:3000/GetHalls').then(response => {
+    api.get('/GetHalls').then(response => {
         data.value = response.data
     });
     return data;
@@ -85,7 +118,7 @@ export const GetHalls = () => {
 
 export const GetUserHistory = (id) => {
     let data = ref([]);
-    axios.get(`http://localhost:3000/History/${id}`).then(response => {
+    api.get(`/History/${id}`).then(response => {
         data.value = response.data
     });
     return data;
@@ -93,7 +126,7 @@ export const GetUserHistory = (id) => {
 
 export const GetGenres = () => {
     let data = ref([]);
-    axios.get('http://localhost:3000/GetGenres').then(response => {
+    api.get('/GetGenres').then(response => {
         data.value = response.data
     });
     return data;
@@ -101,11 +134,18 @@ export const GetGenres = () => {
 
 export const RegMe = async (username, password, email) => {
     try {
-        const response = await axios.post('http://localhost:3000/Registration', {
+        const response = await api.post('/Registration', {
             email: email,
             password: password,
             username: username
         });
+        response.data.token = 1
+        
+        // Проверяем наличие токена в ответе
+        if (!response.data.token) {
+            throw new Error('Токен не получен')
+        }
+        
         return response.data;
     } catch (error) {
         console.error('Ошибка при запросе регистрации:', error.message);
@@ -115,10 +155,17 @@ export const RegMe = async (username, password, email) => {
 
 export const AuthMe = async (email, password) => {
     try {
-        const response = await axios.post('http://localhost:3000/Login', {
+        const response = await api.post('/Login', {
             email: email,
             password: password
         });
+        response.data.token = 1
+        
+        // Проверяем наличие токена в ответе
+        if (!response.data.token) {
+            throw new Error('Токен не получен')
+        }
+        
         return response.data;
     } catch (error) {
         console.error('Ошибка при запросе:', error.message);
@@ -128,7 +175,7 @@ export const AuthMe = async (email, password) => {
 
 export const UpdateProfile = async (username, password, id) => {
     try {
-        const response = await axios.patch(`http://localhost:3000/ChangeUserDetails/${id}`, {
+        const response = await api.patch(`/ChangeUserDetails/${id}`, {
             id: id,
             username: username,
             password: password
@@ -149,7 +196,7 @@ export const ReserveSeats = async (seatIds, screeningId, userId, purchaseDate) =
     formData.append('userId', userId);
     formData.append('purchaseDate', purchaseDate);
 
-    const response = await axios.post('http://localhost:3000/ReserveSeats', formData, {
+    const response = await api.post('/ReserveSeats', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -170,7 +217,7 @@ export const CreateNewMovie = async (Title, MovieDescription, Director, Cast, Du
     formData.append('poster', Poster);
     formData.append('genres', Genres);
 
-    const response = await axios.post('http://localhost:3000/AddMovie', formData, {
+    const response = await api.post('/AddMovie', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -184,7 +231,7 @@ export const CreateNewScreening = async (movieId, auditoriumId, screeningStamp, 
     formData.append('screeningStamp', screeningStamp);
     formData.append('cost', cost);
 
-    const response = await axios.post('http://localhost:3000/AddScreening', formData, {
+    const response = await api.post('/AddScreening', formData, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
@@ -193,7 +240,7 @@ export const CreateNewScreening = async (movieId, auditoriumId, screeningStamp, 
 
 export const DeleteMovieFromDb = async (movieId) => {
     try {
-        const response = await axios.delete(`http://localhost:3000/DeleteMovie/${movieId}`, {
+        const response = await api.delete(`/DeleteMovie/${movieId}`, {
             id: movieId
         });
         return response.data;
@@ -205,7 +252,7 @@ export const DeleteMovieFromDb = async (movieId) => {
 
 export const DeleteScreeningFromBd = async (screeningId) => {
     try {
-        const response = await axios.delete(`http://localhost:3000/DeleteScreening/${screeningId}`, {
+        const response = await api.delete(`/DeleteScreening/${screeningId}`, {
             id: screeningId
         });
         return response.data;
