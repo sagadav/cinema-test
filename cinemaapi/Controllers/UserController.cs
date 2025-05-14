@@ -146,7 +146,8 @@ namespace cinemaapi.Controllers
                     MovieTitle = reservation.Screening.Movie.Title,
                     MoviePoster = reservation.Screening.Movie.Poster,
                     Cost = reservation.Screening.Cost,
-                    ScreeningDate = reservation.Screening.ScreeningStamp
+                    ScreeningDate = reservation.Screening.ScreeningStamp,
+                    ReservationId = reservation.Id
                 })
                 .Select(group => new
                 {
@@ -155,8 +156,10 @@ namespace cinemaapi.Controllers
                     group.Key.MoviePoster,
                     group.Key.Cost,
                     group.Key.ScreeningDate,
+                    group.Key.ReservationId,
                     TicketCount = group.Sum(r => r.SeatReserveds.Count),
-                    PurchaseDate = group.FirstOrDefault().PurchaseDate
+                    PurchaseDate = group.FirstOrDefault().PurchaseDate,
+                    CanRefund = group.Key.ScreeningDate > DateTime.Now.AddHours(2)
                 })
                 .ToList();
 

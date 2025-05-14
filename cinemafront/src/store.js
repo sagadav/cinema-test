@@ -33,6 +33,7 @@ export const useUserStore = defineStore('user', () => {
         email.value = mail
         role.value = userRole
         id.value = userid
+        userId.value = userid
     }
 
     function resetUserData() {
@@ -83,6 +84,7 @@ export const useUserStore = defineStore('user', () => {
         setUserData,
         resetUserData,
         getUsername,
+        id,
     }
 })
 
@@ -91,15 +93,17 @@ export const useTicketStore = defineStore('ticket',() => {
     const screeningId = ref(0)
     const cost = ref(0)
     const seats = ref([])
+    const reservationId = ref(0)
 
     const getFinalCost = computed(() => cost.value * seats.value.length)
 
-    function setTicketData(idUser, screening, currentCost, selected) {
+    function setTicketData(idUser, screening, currentCost, selected, reservation) {
         userId.value = idUser
         screeningId.value = screening
         cost.value = currentCost
         seats.value = selected
+        reservationId.value = reservation
     }
 
-    return {userId, screeningId, cost, seats, getFinalCost, setTicketData}
+    return {userId, screeningId, cost, seats, reservationId, getFinalCost, setTicketData}
 })

@@ -57,7 +57,6 @@ const updateProfile = async () => {
 </script>
 
 <template>
-<nav-bar></nav-bar>
 <div class="profile">
     <div>
         <h1>Здравствуйте, {{ username }}</h1>

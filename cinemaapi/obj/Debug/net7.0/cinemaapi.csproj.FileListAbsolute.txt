@@ -202,3 +202,4 @@ C:\Users\sagadavv\Desktop\diplom\cinemaapi\obj\Debug\net7.0\refint\cinemaapi.dll
 C:\Users\sagadavv\Desktop\diplom\cinemaapi\obj\Debug\net7.0\cinemaapi.pdb
 C:\Users\sagadavv\Desktop\diplom\cinemaapi\obj\Debug\net7.0\cinemaapi.genruntimeconfig.cache
 C:\Users\sagadavv\Desktop\diplom\cinemaapi\obj\Debug\net7.0\ref\cinemaapi.dll
+C:\Users\sagadavv\Desktop\diplom\cinemaapi\obj\Debug\net7.0\cinemaapi.sourcelink.json

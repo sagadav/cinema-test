@@ -46,6 +46,14 @@ const eror = (message) => {
 const openProfile = () => {
   router.push({name: "profile"});
 };
+
+const goToMovieManagement = () => {
+  router.push({name: "cashier-home"});
+};
+
+const goToMovieEdit = () => {
+  router.push({name: "movieedit"});
+};
 </script>
 
 <template>
@@ -68,6 +76,14 @@ const openProfile = () => {
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
+          </button>
+        </div>
+        <div class="nav-links" v-if="store.role === 'Admin' || store.role === 'Cashier'">
+          <button class="nav-btn" @click="goToMovieManagement" v-if="store.role === 'Admin'">
+            Управление фильмами
+          </button>
+          <button class="nav-btn" @click="goToMovieEdit" v-if="store.role === 'Admin'">
+            Редактирование фильмов
           </button>
         </div>
         <button class="login-btn" @click="isDialogOpen = true" v-if="!email">Войти</button>
@@ -180,6 +196,27 @@ const openProfile = () => {
   padding: 5px;
 }
 
+.nav-links {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  background-color: #3788d0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.nav-btn:hover {
+  background-color: #2d6da3;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -200,6 +237,15 @@ const openProfile = () => {
   }
 
   .login-btn {
+    width: 100%;
+  }
+
+  .nav-links {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav-btn {
     width: 100%;
   }
 }

@@ -1,17 +1,19 @@
 <script setup>
 import Qrcode from 'qrcode.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { GetScreeningDetails } from '@/db/api';
 import { useRoute } from 'vue-router';
 import { useTicketStore } from '@/store';
 import router from '@/router';
 import html2canvas from 'html2canvas';
+import { RefundTickets } from '@/db/api';
+import { useUserStore } from '@/store';
 
 const size = 225
 
 const route = useRoute()
 const ticketStore = useTicketStore()
-
+const userStore = useUserStore()
 
 let seats = ticketStore.seats.map(item => {
     return {
@@ -21,8 +23,9 @@ let seats = ticketStore.seats.map(item => {
 });
 
 const screeningData = ref([])
-screeningData.value = GetScreeningDetails(route.params.id)
-// console.log(screeningData.value?.value[0]?.Cost)
+onMounted(async () => {
+    screeningData.value = await GetScreeningDetails(route.params.id)
+})
 
 let final = computed(() => ticketStore.getFinalCost)
 
@@ -82,9 +85,27 @@ const qrData = computed(() => {
         data: ticketData
     });
 });
+
+const handleRefund = async () => {
+    if (confirm('Вы уверены, что хотите вернуть билеты?')) {
+        try {
+            const response = await RefundTickets(ticketStore.reservationId);
+            if (response.status === 200) {
+                alert('Билеты успешно возвращены');
+                router.push({ name: 'profile' });
+            }
+        } catch (error) {
+            alert(error.response?.data || 'Произошла ошибка при возврате билетов');
+        }
+    }
+};
 </script>
 
 <template>
+    <div v-if="!screeningData.value || !screeningData.value.length">
+        loading
+    </div>
+    <div v-else>
     <div class="header">
         <h1>Ваш билет</h1>
     </div>
@@ -115,10 +136,14 @@ const qrData = computed(() => {
                 <p v-for="seat in seats">Ряд места: {{ seat.row }}, Номер места: {{ seat.num }}</p>
             </div>
         </div>    
+        <div v-if="!screeningData.value[0]?.CanRefund" class="refund-section">
+            <button class="refund-btn" @click="handleRefund">Вернуть билеты</button>
+        </div>
     </div>
     <div class="back">
         <button class="btn" @click="goBack">Вернуться</button>
         <button class="btn" @click="downloadTicket">Скачать билет</button>
+    </div>
     </div>
 </template>
 
@@ -190,5 +215,26 @@ h1 {
     border-top: 1px solid black; 
     margin-top: 20px;
     gap: 20px;
+}
+
+.refund-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.refund-btn {
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.refund-btn:hover {
+    background-color: #c82333;
 }
 </style>

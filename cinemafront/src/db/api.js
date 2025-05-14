@@ -205,6 +205,19 @@ export const ReserveSeats = async (seatIds, screeningId, userId, purchaseDate) =
     return response
 }
 
+export const RefundTickets = async (reservationId) => {
+    const formData = new FormData();
+    formData.append('reservationId', reservationId);
+
+    const response = await api.post('/RefundTickets', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return response;
+}
+
 export const CreateNewMovie = async (Title, MovieDescription, Director, Cast, DurationMin, Country, PremierDate, Poster, Genres) => {
     const formData = new FormData();
     formData.append('title', Title);

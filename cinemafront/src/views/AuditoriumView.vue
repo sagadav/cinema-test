@@ -1,6 +1,6 @@
 <script setup>
-import { getAvailableSeats, GetScreeningDetails, ReserveSeats } from '@/db/api';
-import { ref } from 'vue';
+import { getAvailableSeats, GetScreeningDetails, ReserveSeats, RefundTickets } from '@/db/api';
+import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import NavBar from '@/components/NavBar.vue';
 import { useTicketStore, useUserStore } from '@/store';
@@ -22,13 +22,22 @@ screeningData.value = GetScreeningDetails(route.params.id)
 const selectedSeat = ref([])
 const selectedUserId = ref(store.id)
 const users = ref([])
+const reservations = ref([])
+const seatLimitWarning = ref('')
 
-// Fetch all users if the current user is a cashier
+// Fetch all users and reservations if the current user is a cashier
 if (store.role === 'Cashier') {
     axios.get('http://localhost:3000/Users').then(response => {
         users.value = response.data;
     }).catch(error => {
         console.error('Error fetching users:', error);
+    });
+
+    // Fetch reservations for the current screening
+    axios.get(`http://localhost:3000/GetReservationsByScreening/${route.params.id}`).then(response => {
+        reservations.value = response.data;
+    }).catch(error => {
+        console.error('Error fetching reservations:', error);
     });
 }
 
@@ -56,13 +65,33 @@ const formatDateToSqlTimestamp = (date) => {
 };
 
 const reserveSeat = (seatId) => {
+    // If user is a cashier, no limit applies
+    if (store.role === 'Cashier') {
+        if(selectedSeat.value.includes(seatId)) {
+            selectedSeat.value = selectedSeat.value.filter(function(item) {
+                return item !== seatId
+            })
+        }    
+        else 
+            selectedSeat.value.push(seatId)
+        return
+    }
+
+    // For regular users, check the 5 seat limit
     if(selectedSeat.value.includes(seatId)) {
         selectedSeat.value = selectedSeat.value.filter(function(item) {
             return item !== seatId
         })
+        seatLimitWarning.value = ''
     }    
-    else 
+    else {
+        if (selectedSeat.value.length >= 5) {
+            seatLimitWarning.value = 'Достигнут лимит в 5 мест'
+            return
+        }
         selectedSeat.value.push(seatId)
+        seatLimitWarning.value = ''
+    }
 }
 
 const reserve = async () => {
@@ -73,14 +102,31 @@ const reserve = async () => {
         })
 
         const date = new Date();
-        const data = await ReserveSeats(seats, route.params.id, selectedUserId.value, formatDateToSqlTimestamp(date)); 
+        const data = await ReserveSeats(seats, route.params.id, selectedUserId.value || store.id, formatDateToSqlTimestamp(date)); 
         if(data.status === 200) {
             alert("Места забронированы!")
-            ticketStore.setTicketData(selectedUserId.value, route.params.id, screeningData.value.value[0].Cost, selectedSeat.value)
+            // Get the reservation ID from the response
+            const reservationId = data.data.id;
+            ticketStore.setTicketData(selectedUserId.value, route.params.id, screeningData.value.value[0].Cost, selectedSeat.value, reservationId)
             router.push({name: "ticket"})
         }
     } catch (error) {
         console.error('Ошибка при бронировании:', error);
+    }
+}
+
+const handleRefund = async (reservationId) => {
+    if (confirm('Вы уверены, что хотите вернуть билеты?')) {
+        try {
+            const response = await RefundTickets(reservationId);
+            if (response.status === 200) {
+                alert('Билеты успешно возвращены');
+                // Refresh the page to update the seat status
+                window.location.reload();
+            }
+        } catch (error) {
+            alert(error.response?.data || 'Произошла ошибка при возврате билетов');
+        }
     }
 }
 </script>
@@ -134,6 +180,10 @@ const reserve = async () => {
                 </p>
             </div>
             
+            <div v-if="seatLimitWarning" class="warning-message">
+                {{ seatLimitWarning }}
+            </div>
+            
             <div v-if="store.role === 'Cashier'" class="user-selection">
                 <label for="userSelect">Выберите покупателя:</label>
                 <select id="userSelect" v-model="selectedUserId" class="user-select">
@@ -146,6 +196,21 @@ const reserve = async () => {
             <div class="booking-summary">
                 <p class="total-price">Стоимость: {{ screeningData.value[0].Cost * selectedSeat.length }} руб.</p>
                 <button class="btn" @click="reserve">Забронировать</button>
+            </div>
+        </div>
+    </div>
+
+    <div v-if="store.role === 'Cashier' && reservations.length > 0" class="refund-section">
+        <h2>Возврат билетов</h2>
+        <div class="reservations-list">
+            <div v-for="reservation in reservations" :key="reservation.id" class="reservation-item">
+                <div class="reservation-info">
+                    <p><strong>Пользователь:</strong> {{ reservation.userName }}</p>
+                    <p><strong>Дата покупки:</strong> {{ formattedDate(reservation.purchaseDate) }}</p>
+                    <p><strong>Количество мест:</strong> {{ reservation.seatCount }}</p>
+                    <p><strong>Сумма:</strong> {{ reservation.totalCost }} руб.</p>
+                </div>
+                <button class="refund-btn" @click="handleRefund(reservation.id)">Вернуть билеты</button>
             </div>
         </div>
     </div>
@@ -327,5 +392,66 @@ const reserve = async () => {
 
 .btn:hover {
     background-color: #2d6da3;
+}
+
+.refund-section {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+}
+
+.refund-section h2 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+.reservations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reservation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.reservation-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.reservation-info p {
+    margin: 0;
+    color: #666;
+}
+
+.refund-btn {
+    padding: 8px 16px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.refund-btn:hover {
+    background-color: #c82333;
+}
+
+.warning-message {
+    color: #dc3545;
+    font-size: 16px;
+    margin: 10px 0;
+    text-align: center;
 }
 </style>

@@ -161,7 +161,7 @@ const handleLoginSubmit = async () => {
   }
   try {
     const data = await AuthMe(email.value, password.value); 
-    
+    console.log(data)
     // Сохраняем токен и данные пользователя
     store.setToken(data.token)
     store.setRole(data.role)
