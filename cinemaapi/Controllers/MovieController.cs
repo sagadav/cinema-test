@@ -132,5 +132,20 @@ namespace cinemaapi.Controllers
             _context.SaveChanges();
             return Ok("Deleted");
         }
+
+        [HttpGet("SearchMovies")]
+        public IActionResult SearchMovies(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return Ok(new List<object>());
+
+            var movies = _context.Movies
+                .Where(x => x.Title.ToLower().Contains(query.ToLower()))
+                .Select(x => new { x.Id, x.Title })
+                .ToList();
+
+            var json = System.Text.Json.JsonSerializer.Serialize(movies, new JsonSerializerOptions() { ReferenceHandler = ReferenceHandler.IgnoreCycles });
+            return Ok(json);
+        }
     }
 }

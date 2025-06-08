@@ -1,5 +1,5 @@
 <script setup>
-import { LoadSchedule, GetScheduleDates } from '@/db/api';
+import { LoadSchedule, GetScheduleDates, SearchMovies } from '@/db/api';
 import Schedule from '../components/Schedule.vue'
 import Calendar from '../components/Calendar.vue';
 import NavBar from "@/components/NavBar.vue";
@@ -18,19 +18,20 @@ const formatDateToSqlTimestamp = (date) => {
 
 const loadData = async () => {
   try {
-    if (route.query.search) {
-      // Если есть поисковый запрос, фильтруем фильмы
+    if (route.query.search && false) {
+      // If there's a search query, use the search endpoint
+      const searchResults = await SearchMovies(route.query.search);
       const scheduleData = await LoadSchedule(formatDateToSqlTimestamp(date));
+      // Filter the schedule data to only show movies that match the search
       data.value = scheduleData.value.filter(x => 
-        x.MovieDto.Title.toLowerCase().includes(route.query.search.toLowerCase())
+        searchResults.value.some(movie => movie.Id === x.MovieDto.Id)
       );
     } else if (route.query.date) {
-      // Если есть дата в query параметрах, загружаем расписание на эту дату
+      // If there's a date in query parameters, load schedule for that date
       const scheduleData = await LoadSchedule(route.query.date);
-      console.log(scheduleData.value)
       data.value = scheduleData.value;
     } else {
-      // Иначе загружаем расписание на текущую дату
+      // Otherwise load schedule for current date
       const scheduleData = await LoadSchedule(formatDateToSqlTimestamp(date));
       data.value = scheduleData.value;
     }

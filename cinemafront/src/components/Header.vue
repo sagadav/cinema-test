@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store';
 import AuthDialog from './AuthDialog.vue';
 import AlertDialog from './AlertDialog.vue';
+import SearchResults from './SearchResults.vue';
 
 const router = useRouter();
 const store = useUserStore();
@@ -11,14 +12,35 @@ const searchQuery = ref('');
 const isDialogOpen = ref(false);
 const alertText = ref('');
 const isAlertOpen = ref(false);
+const showSearchResults = ref(false);
 
 const email = computed(() => store.getUsername);
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
     router.push({ path: '/', query: { search: searchQuery.value.trim() } });
+    showSearchResults.value = false;
   }
 };
+
+const handleSearchInput = () => {
+  showSearchResults.value = true;
+};
+
+const handleClickOutside = (event) => {
+  const searchContainer = document.querySelector('.search-container');
+  if (searchContainer && !searchContainer.contains(event.target)) {
+    showSearchResults.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 const goHome = () => {
   router.push('/');
@@ -69,6 +91,7 @@ const goToMovieEdit = () => {
             v-model="searchQuery" 
             placeholder="Поиск фильмов..." 
             @keyup.enter="handleSearch"
+            @input="handleSearchInput"
             class="search-input"
           >
           <button @click="handleSearch" class="search-button">
@@ -77,9 +100,13 @@ const goToMovieEdit = () => {
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </button>
+          <SearchResults 
+            :query="searchQuery" 
+            :show="showSearchResults"
+          />
         </div>
         <div class="nav-links" v-if="store.role === 'Admin' || store.role === 'Cashier'">
-          <button class="nav-btn" @click="goToMovieManagement" v-if="store.role === 'Admin'">
+          <button class="nav-btn" @click="goToMovieManagement" v-if="store.role === 'Admin' || store.role === 'Cashier'">
             Управление фильмами
           </button>
           <button class="nav-btn" @click="goToMovieEdit" v-if="store.role === 'Admin'">
@@ -137,6 +164,7 @@ const goToMovieEdit = () => {
 }
 
 .search-container {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;

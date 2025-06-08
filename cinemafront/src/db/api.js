@@ -84,9 +84,9 @@ export const GetScreeningDetails = (id) => {
     return data;
 }
 
-export const GetAllSchedule = () => {
+export const GetAllSchedule = async () => {
     let data = ref([]);
-    api.get('/GetAllSchedule').then(response => {
+    await api.get('/GetAllSchedule').then(response => {
         data.value = response.data
     });
     return data;
@@ -100,33 +100,33 @@ export const GetScheduleDates = async () => {
     return data;
 }
 
-export const GetMovieTitle = () => {
+export const GetMovieTitle = async () => {
     let data = ref([]);
-    api.get('/GetMovies').then(response => {
+    await api.get('/GetMovies').then(response => {
         data.value = response.data
     });
     return data;
 }
 
-export const GetHalls = () => {
+export const GetHalls = async () => {
     let data = ref([]);
-    api.get('/GetHalls').then(response => {
+    await api.get('/GetHalls').then(response => {
         data.value = response.data
     });
     return data;
 }
 
-export const GetUserHistory = (id) => {
+export const GetUserHistory = async (id) => {
     let data = ref([]);
-    api.get(`/History/${id}`).then(response => {
+    await api.get(`/History/${id}`).then(response => {
         data.value = response.data
     });
     return data;
 }
 
-export const GetGenres = () => {
+export const GetGenres = async () => {
     let data = ref([]);
-    api.get('/GetGenres').then(response => {
+    await api.get('/GetGenres').then(response => {
         data.value = response.data
     });
     return data;
@@ -273,4 +273,14 @@ export const DeleteScreeningFromBd = async (screeningId) => {
         console.error('Ошибка при запросе:', error.message);
         throw error;
     }
+}
+
+export const SearchMovies = async (query) => {
+    let data = ref([]);
+    await api.get(`/SearchMovies?query=${encodeURIComponent(query)}`).then(response => {
+        data.value = response.data;
+    }).catch(error => {
+        console.log(error);
+    });
+    return data;
 }

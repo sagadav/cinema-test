@@ -36,12 +36,26 @@ const loadData = async () => {
       GetHalls(),
       GetAllSchedule()
     ]);
-    movies.value = moviesData.value;
-    halls.value = hallsData.value;
-    screenings.value = screeningsData.value;
+    
+    // Проверяем и обрабатываем данные
+    movies.value = moviesData?.value || [];
+    halls.value = hallsData?.value || [];
+    screenings.value = screeningsData?.value || [];
+
+    // Проверяем, что данные загрузились
+    if (movies.value.length === 0) {
+      console.warn('No movies loaded');
+    }
+    if (halls.value.length === 0) {
+      console.warn('No halls loaded');
+    }
+    if (screenings.value.length === 0) {
+      console.warn('No screenings loaded');
+    }
+
   } catch (error) {
     console.error('Error loading data:', error);
-    alert('Ошибка при загрузке данных');
+    alert('Ошибка при загрузке данных: ' + (error.message || 'Неизвестная ошибка'));
   } finally {
     isLoading.value = false;
   }
@@ -134,6 +148,7 @@ const handleDeleteScreening = async () => {
                   {{ movie.Title }}
                 </option>
               </select>
+              <p v-if="movies.length === 0" class="error-message">Нет доступных фильмов</p>
             </div>
 
             <div class="form-group">
@@ -144,6 +159,7 @@ const handleDeleteScreening = async () => {
                   {{ hall.Title }}
                 </option>
               </select>
+              <p v-if="halls.length === 0" class="error-message">Нет доступных залов</p>
             </div>
 
             <div class="form-group">
@@ -341,5 +357,11 @@ tr:hover {
   text-align: center;
   padding: 20px;
   color: #666;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 5px;
 }
 </style>

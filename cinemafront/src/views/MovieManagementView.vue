@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { CreateNewMovie, DeleteMovieFromDb, GetGenres, GetMovieTitle, GetMovieDetails } from '@/db/api';
 import { useUserStore } from '@/store';
 import router from '@/router';
+import AdminNavBar from '@/components/AdminNavBar.vue';
 
 const store = useUserStore();
 if (store.role !== "Admin") {
@@ -150,6 +151,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
+  <AdminNavBar />
   <div class="movie-management">
     <div class="header">
       <h1>{{ isEditing ? 'Редактирование фильма' : 'Добавление фильма' }}</h1>
@@ -290,8 +292,8 @@ const handleSubmit = async () => {
               <tr>
                 <th>ID</th>
                 <th>Название</th>
-                <th>Режиссер</th>
-                <th>Длительность</th>
+                <!-- <th>Режиссер</th> -->
+                <!-- <th>Длительность</th> -->
                 <th>Действия</th>
               </tr>
             </thead>
@@ -299,8 +301,8 @@ const handleSubmit = async () => {
               <tr v-for="movie in movies.value" :key="movie.Id">
                 <td>{{ movie.Id }}</td>
                 <td>{{ movie.Title }}</td>
-                <td>{{ movie.Director }}</td>
-                <td>{{ movie.DurationMin }} мин</td>
+                <!-- <td>{{ movie.Director }}</td> -->
+                <!-- <td>{{ movie.DurationMin }} мин</td> -->
                 <td class="actions">
                   <button 
                     class="edit-btn"
